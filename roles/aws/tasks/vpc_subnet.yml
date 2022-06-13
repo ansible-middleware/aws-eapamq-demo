@@ -1,0 +1,22 @@
+---
+- name: Create subnet
+  ec2_vpc_subnet:
+    vpc_id: "{{ created_vpc.vpc.id }}"
+    region: "{{ region }}"
+    cidr: "{{ subnet }}"
+    tags: "{{ resource_tags }}"
+    az: "{{ vpc[region].subnets[subnet].az }}"
+    map_public: yes
+  register: created_subnet
+  retries: 3
+  delay: 5
+
+- set_fact:
+    vpc_result: "{{ vpc_result | combine( 
+      { region: 
+        { 'subnets': 
+          { subnet: 
+            { 'subnet_id': created_subnet.subnet.id, 'az': created_subnet.subnet.availability_zone } 
+          } 
+        } 
+      }, recursive=True ) }}"  

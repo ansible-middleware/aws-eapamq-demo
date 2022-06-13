@@ -1,0 +1,16 @@
+---
+collections:
+  - name: middleware_automation.redhat_csp_download
+    version: ">=1.2.1"
+  - name: middleware_automation.infinispan
+    version: ">=1.0.3"
+  - name: middleware_automation.amq
+    version: ">=0.0.2"
+  - name: middleware_automation.wildfly
+    version: ">=0.0.4"
+  - name: community.general
+  - name: community.mysql
+  - name: ansible.netcommon
+  - name: ansible.posix
+  - name: community.aws
+  - name: amazon.aws

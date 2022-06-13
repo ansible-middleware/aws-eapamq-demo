@@ -1,0 +1,63 @@
+---
+- name: "Query for existing running instance: {{ instance.name }}"
+  ec2_instance_info:
+    region: "{{ instance.region }}"
+    filters:
+      "tag:Name": "{{ instance.name }}"
+      instance-state-name: [ "running", "pending" ]
+  register: running_instance
+
+- name: "Create EC2 instance: {{ instance.name }}"
+  ec2_instance:
+    region: "{{ instance.region }}"
+    name: "{{ instance.name }}"
+    instance_ids: "{{ instance.name }}"
+    instance_type: "{{ instance.type | default('t2.micro') }}"
+    vpc_subnet_id: "{{ vpc_result[instance.region].subnets[instance.subnet].subnet_id }}"
+    key_name: "{{ ssh_key_name }}"
+    security_group: "{{ vpc_result[instance.region].name }}-{{ instance.role }}"
+    tags: "{{ resource_tags | combine( { 'Role': instance.role, 'Site': instance.site } ) }}"
+    image_id: "{{ latest_ami[instance.region] }}"
+    termination_protection: False
+  register: new_instance  
+  retries: 3
+  delay: 5
+  when: running_instance.instances | length == 0
+
+- name: "Query for running instance: {{ instance.name }}"
+  ec2_instance_info:
+    region: "{{ instance.region }}"
+    filters:
+      "tag:Name": "{{ instance.name }}"
+      instance-state-name: [ "running", "pending" ]
+  retries: 3
+  delay: 10
+  until: running_instance.instances[0].private_ip_address is defined
+  register: running_instance
+
+- set_fact:
+    private_ip: "{{ running_instance.instances[0].private_ip_address }}"
+    vm_result: "{{ vm_result + [{
+      'name': instance.name,
+      'site': instance.site,
+      'region': instance.region,
+      'role': instance.role,
+      'subnet': instance.subnet,
+      'private_ip': running_instance.instances[0].private_ip_address,
+      'public_ip': running_instance.instances[0].public_ip_address | default(''),
+      'az': running_instance.instances[0].placement.availability_zone,
+      'instance_id': running_instance.instances[0].instance_id
+    }] }}"  
+
+- name: "Add instance A record {{ instance.name }}.{{ privatednszone }} with private IP {{ private_ip }}"
+  route53:
+    state: present
+    zone: "{{ privatednszone }}"
+    private_zone: yes
+    record: "{{ instance.name }}.{{ privatednszone }}"
+    type: A
+    ttl: "{{ ttl }}"
+    value: "{{ private_ip }}"
+    overwrite: yes
+  retries: 3
+  delay: 5

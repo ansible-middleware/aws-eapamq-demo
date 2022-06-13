@@ -1,0 +1,8 @@
+- name: Refresh inventory and roles git repo
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+- import_playbook: cross-dc-rhsso-demo/playbooks/all.yml
+  vars:
+    tls_certs_lookup_path: "../../files/"

@@ -1,0 +1,6 @@
+netaddr
+lxml
+jmespath
+psycopg
+boto3
+botocore

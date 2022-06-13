@@ -1,0 +1,236 @@
+---
+admin_username: ec2user 
+admin_password: Password12345
+image_version: "latest"
+publicIP: ansible-middileware-ip
+public_ip_address_name: ansible-middileware-public-ip
+domain_name: "eapamq"
+privatednszone: "internal.ansiblemiddleware.com"
+#Link public DNS to loadbalancr
+relative_name: "eapamq"
+dns_name: "awsdemos.ansiblemiddleware.com"
+# vpc with subnet per region
+vpc:
+  us-east-1:
+    name: eap-amq-east-1
+    cidr_block: "10.0.3.0/26"
+    subnets:
+      "10.0.3.0/28":
+        az: us-east-1e
+      "10.0.3.16/28":
+        az: us-east-1e
+      "10.0.3.32/28":
+        az: us-east-1e
+  us-west-2:
+    name: eap-amq-west-2
+    cidr_block: "10.0.4.0/26"
+    subnets:
+      "10.0.4.0/28":
+        az: us-west-2c
+      "10.0.4.16/28":
+        az: us-west-2c
+      "10.0.4.32/28":
+        az: us-west-2c
+security_groups:
+    - name: loadbalancer
+      description: Ingress rules for loadbalancer
+      rules:
+        - rule_desc: 'ssh'
+          from_port: '22'
+          to_port: '22'
+          proto: tcp
+          cidr_ip: 0.0.0.0/0
+        - rule_desc: https
+          from_port: '443'
+          to_port: '443'
+          proto: tcp
+          cidr_ip: 0.0.0.0/0
+        - rule_desc: "modcluster - site1"
+          from_port: '6666'
+          to_port: '6666'
+          proto: tcp
+          cidr_ip: 10.0.1.16/28
+        - rule_desc: "modcluster - site2"
+          from_port: '6666'
+          to_port: '6666'
+          proto: tcp
+          cidr_ip: 10.0.2.16/28
+    - name: datagrid
+      description: Ingress rules for DataGrid
+      rules:
+        - rule_desc: 'ssh'
+          from_port: '22'
+          to_port: '22'
+          proto: tcp
+          cidr_ip: 0.0.0.0/0
+        - rule_desc: 'jgroups - site1 - DataGrid'
+          from_port: '7800'
+          to_port: '7801'
+          proto: tcp
+          cidr_ip: 10.0.1.16/28
+        - rule_desc: 'jgroups - site2 - DataGrid'
+          from_port: '7800'
+          to_port: '7801'
+          proto: tcp
+          cidr_ip: 10.0.2.16/28
+        - rule_desc: 'rest - site1 - DataGrid'
+          from_port: '11222'
+          to_port: '11222'
+          proto: tcp
+          cidr_ip: 10.0.1.16/28
+        - rule_desc: 'rest - site2- DataGrid'
+          from_port: '11222'
+          to_port: '11222'
+          proto: tcp
+          cidr_ip: 10.0.2.16/28
+    - name: amq
+      description: Ingress rules for AMQ Broker
+      rules:
+        - rule_desc: 'ssh'
+          from_port: '22'
+          to_port: '22'
+          proto: tcp
+          cidr_ip: 0.0.0.0/0
+        - rule_desc: 'http - Single Sign-on'
+          from_port: '8080'
+          to_port: '8080'
+          proto: tcp
+          cidr_ip: 10.0.0.0/16
+        - rule_desc: 'ajp - Single Sign-on'
+          from_port: '8009'
+          to_port: '8009'
+          proto: tcp
+          cidr_ip: 10.0.0.0/16
+        - rule_desc: 'jgroups - site1 - Single Sign-on'
+          from_port: '7600'
+          to_port: '7601'
+          proto: tcp
+          cidr_ip: 10.0.1.16/28
+        - rule_desc: 'jgroups - site2 - Single Sign-on'
+          from_port: '7600'
+          to_port: '7601'
+          proto: tcp
+          cidr_ip: 10.0.2.16/28
+    - name: eap
+      description: Ingress rules for EAP
+      rules:
+        - rule_desc: 'ssh'
+          from_port: '22'
+          to_port: '22'
+          proto: tcp
+          cidr_ip: 0.0.0.0/0
+        - rule_desc: 'http - Single Sign-on'
+          from_port: '8080'
+          to_port: '8080'
+          proto: tcp
+          cidr_ip: 10.0.0.0/16
+        - rule_desc: 'ajp - Single Sign-on'
+          from_port: '8009'
+          to_port: '8009'
+          proto: tcp
+          cidr_ip: 10.0.0.0/16
+        - rule_desc: 'jgroups - site1 - Single Sign-on'
+          from_port: '7600'
+          to_port: '7601'
+          proto: tcp
+          cidr_ip: 10.0.1.16/28
+        - rule_desc: 'jgroups - site2 - Single Sign-on'
+          from_port: '7600'
+          to_port: '7601'
+          proto: tcp
+          cidr_ip: 10.0.2.16/28          
+vm:
+  - name: 'site1-loadbalancer'
+    site: 'site1'
+    role: 'loadbalancer'
+    region: us-east-1
+    subnet: "10.0.3.0/28"
+    domain_name: 'eapamq'
+  - name: 'site2-loadbalancer'
+    site: 'site2'
+    role: 'loadbalancer'
+    region: us-west-2
+    subnet: "10.0.4.0/28"
+    domain_name: 'eapamq'
+  # - name: 'site1-datagrid1'
+  #   site: 'site1'
+  #   role: 'datagrid'
+  #   region: us-east-1
+  #   subnet: "10.0.1.16/28"
+  #   type: 't2.small'
+  # - name: 'site1-datagrid2'
+  #   site: 'site1'
+  #   role: 'datagrid'
+  #   region: us-east-1
+  #   subnet: "10.0.1.16/28"
+  #   type: 't2.small'
+  # - name: 'site2-datagrid1'
+  #   site: 'site2'
+  #   role: 'datagrid'
+  #   region: us-west-2
+  #   subnet: "10.0.2.16/28"
+  #   type: 't2.small'
+  # - name: 'site2-datagrid2'
+  #   site: 'site2'
+  #   role: 'datagrid'
+  #   region: us-west-2
+  #   subnet: "10.0.2.16/28"
+  #   type: 't2.small'
+  - name: 'site1-eap1'
+    site: 'site1'
+    role: 'eap'
+    region: us-east-1
+    subnet: "10.0.3.16/28"
+    type: 't2.small'
+  - name: 'site1-eap2'
+    site: 'site1'
+    role: 'eap'
+    region: us-east-1
+    subnet: "10.0.3.16/28"
+    type: 't2.small'
+  - name: 'site2-eap1'
+    site: 'site2'
+    role: 'eap'
+    region: us-west-2
+    subnet: "10.0.4.16/28"
+    type: 't2.small'
+  - name: 'site2-eap2'
+    site: 'site2'
+    role: 'eap'
+    region: us-west-2
+    subnet: "10.0.4.16/28"
+    type: 't2.small'
+  - name: 'site1-amq1'
+    site: 'site1'
+    role: 'amq'
+    region: us-east-1
+    subnet: "10.0.3.32/28"
+    type: 't2.small'
+  - name: 'site1-amq2'
+    site: 'site1'
+    role: 'amq'
+    region: us-east-1
+    subnet: "10.0.3.32/28"
+    type: 't2.small'
+  - name: 'site2-amq1'
+    site: 'site2'
+    role: 'amq'
+    region: us-west-2
+    subnet: "10.0.4.32/28"
+    type: 't2.small'
+  - name: 'site2-amq2'
+    site: 'site2'
+    role: 'amq'
+    region: us-west-2
+    subnet: "10.0.4.32/28"
+    type: 't2.small'
+# Everything that supports tagging will be tagged at least with these:
+resource_tags:
+  Environment: eap-amq-demo
+  Application: eap-amq-integration
+  Created-By: ansible
+
+ssh_key_name: guido
+
+ttl: 60
+destroy_networking: False

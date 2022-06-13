@@ -1,0 +1,18 @@
+plugin: amazon.aws.aws_ec2
+regions:
+  - us-east-1
+  - us-west-2
+filters:
+  tag:Environment: eap-amq-demo
+  tag:Application: eap-amq-integration
+hostnames:
+  - tag:Name
+leading_separator: no
+keyed_groups:
+ - key: tags.Role
+ - key: tags.Site
+ - key: placement.region
+# Ignores 403 errors rather than failing
+strict_permissions: False
+compose:
+  ansible_host: public_ip_address

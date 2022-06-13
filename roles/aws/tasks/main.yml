@@ -1,0 +1,2 @@
+---
+- include_tasks: "{{ action | default('create') }}.yml"

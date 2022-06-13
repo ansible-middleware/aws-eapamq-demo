@@ -1,0 +1,58 @@
+---
+- name: Create virtual private network
+  ec2_vpc_net:
+    region: "{{ region }}"
+    name: "{{ vpc_data.name }}"
+    cidr_block: "{{ vpc_data.cidr_block }}"
+    tags: "{{ resource_tags }}"
+  register: created_vpc
+
+- name: create Internet GateWay
+  ec2_vpc_igw:
+   vpc_id: "{{ created_vpc.vpc.id }}"
+   region: "{{ region }}"
+   tags: "{{ resource_tags }}"
+  register: created_igw
+
+- set_fact:
+    vpc_result: "{{ vpc_result | combine(
+      { region: vpc_data | combine( 
+        { 'vpc_id': created_vpc.vpc.id, 
+          'igw_id': created_igw.gateway_id 
+        }, recursive=True ) 
+      } ) }}"
+
+- name: Create subnets in VPC
+  loop: "{{ vpc_data.subnets | list }}"
+  loop_control:
+    loop_var: subnet
+  include_tasks: vpc_subnet.yml
+
+- name: Route table for subnet/IGW
+  ec2_vpc_route_table:
+    vpc_id: "{{ created_vpc.vpc.id }}"
+    region: "{{ region }}"
+    subnets: "{{ vpc_data.subnets | list }}"
+    purge_routes: False
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ created_igw.gateway_id  }}"
+    tags: "{{ resource_tags }}"
+
+- name: Create security groups
+  ec2_group:
+    vpc_id: "{{ created_vpc.vpc.id }}"
+    region: "{{ region }}"
+    name: "{{ vpc_data.name }}-{{ sg.name }}"
+    description: "{{ sg.description }}"
+    rules: "{{ sg.rules }}"
+    rules_egress:
+      - rule_desc: 'allow outbound traffic to anywhere'
+        from_port: '0'
+        to_port: '65535'
+        proto: tcp
+        cidr_ip: 0.0.0.0/0
+    tags: "{{ resource_tags }}"
+  loop: "{{ security_groups }}"
+  loop_control:
+    loop_var: sg

@@ -1,0 +1,15 @@
+- name: Create AWS VMs
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  vars:
+    repo_url: "https://github.com/ansible-middleware/cross-dc-rhsso-demo.git"
+    branch: aws
+  tasks:
+    - name: Create demo resources on aws
+      include_role:
+        name: 'aws'
+      vars:
+        ssh_key_path: "{{ ssh_key | default(lookup('env', 'HOME') + '/.ssh/id_rsa')}}"
+        dns_name: "awsdemos.ansiblemiddleware.com" # This is optional
+        managed_mariadb: false

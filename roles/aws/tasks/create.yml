@@ -1,0 +1,101 @@
+---
+- name: Find RHEL8 AMIs
+  ec2_ami_info:
+    region: "{{ item }}"
+    filters:
+      name: RHEL-8.5.0_HVM-*
+      architecture: x86_64
+      root-device-type: ebs
+      virtualization-type: hvm
+  loop: "{{ vpc | list }}"
+  register: rhel8_amis
+
+- name: Select latest RHEL8 AMI
+  set_fact:
+    latest_ami: >-
+      {{ latest_ami | default({}) 
+          | combine( { item.invocation.module_args.region: 
+            item.images
+              | sort(attribute='creation_date')
+              | map(attribute='image_id')
+              | list
+              | last 
+          })
+      }}
+  loop: "{{ rhel8_amis.results }}"
+
+- set_fact:
+    vpc_result: "{{ vpc }}"
+
+- name: Create VPC, subnet and SG for each region
+  loop: "{{ vpc | dict2items }}"
+  include_tasks: vpc.yml
+  vars:
+    region: "{{ item.key }}"
+    vpc_data: "{{ item.value }}"
+
+# TODO the VPC peering/routes does not scale to 3+ regions
+- name: Create VPC peering
+  ec2_vpc_peer:
+    region: "{{ vpc_result | list | first }}"
+    vpc_id: "{{ (vpc_result | dict2items | first).value.vpc_id }}"
+    peer_region: "{{ vpc_result | list | last }}"
+    peer_vpc_id: "{{ (vpc_result | dict2items | last).value.vpc_id }}"
+    tags: "{{ resource_tags }}"
+  register: created_peering
+
+- name: Route table for peering
+  ec2_vpc_route_table:
+    vpc_id: "{{ (vpc_result | dict2items | first).value.vpc_id }}"
+    region: "{{ vpc_result | list | first }}"
+    subnets: "{{ (vpc_result | dict2items | first).value.subnets | list }}"
+    purge_routes: False
+    routes:
+      - dest: "{{ (vpc_result | dict2items | last).value.cidr_block }}"
+        vpc_peering_connection_id: "{{ created_peering.peering_id }}"
+    tags: "{{ resource_tags }}"
+
+- name: Reverse route table for peering
+  ec2_vpc_route_table:
+    vpc_id: "{{ (vpc_result | dict2items | last).value.vpc_id }}"
+    region: "{{ vpc_result | list | last }}"
+    subnets: "{{ (vpc_result | dict2items | last).value.subnets | list }}"
+    purge_routes: False
+    routes:
+      - dest: "{{ (vpc_result | dict2items | first).value.cidr_block }}"
+        vpc_peering_connection_id: "{{ created_peering.peering_id }}"
+    tags: "{{ resource_tags }}"
+
+- name: Create a private DNS zone
+  community.aws.route53_zone:
+    zone: "{{ privatednszone }}"
+    vpc_id: '{{ item.value.vpc_id }}'
+    vpc_region: "{{ item.key }}"
+    tags: "{{ resource_tags }}"
+  loop: "{{ vpc_result | dict2items }}"
+
+# - name: Create public IP address for VM's
+#   azure_rm_publicipaddress:
+#     resource_group: "{{ item.resourcegroup_name }}"
+#     allocation_method: Static
+#     name: "{{ item.name }}-ip"
+#     domain_name: "{{ item.domain_name | default(omit)}}"
+#   loop: "{{ vm }}"
+
+- set_fact:
+    vm_result: []
+
+- name: Create EC2 instances for services
+  include_tasks: instance.yml
+  loop: "{{ vm }}"
+  loop_control:
+    loop_var: instance
+    index_var: vm_idx
+
+- name: "Report of generated networking"
+  debug:
+    var: vpc_result
+
+- name: "Report of generated instances"
+  debug:
+    var: vm_result

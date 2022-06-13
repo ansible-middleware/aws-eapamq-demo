@@ -1,0 +1,60 @@
+---
+- name: "Query for existing running instances"
+  ec2_instance_info:
+    region: "{{ item }}"
+    filters:
+      "tag:Environment": crossdc-rhsso-demo
+      instance-state-name: [ "running", "pending" ]
+  register: instances
+  loop: "{{ vpc | list }}"
+
+- debug:
+    var: instances
+
+- debug:
+    msg: "{{ instances | community.general.json_query(querystr) | flatten }}"
+  loop: "{{ vpc | list }}"
+  vars:
+    querystr: "results[*].instances[?contains(placement.availability_zone, '{{ item }}')].instance_id"
+
+- name: "Terminate EC2 instances"
+  ec2_instance:
+    region: "{{ item }}"
+    instance_ids: "{{ instances | community.general.json_query(querystr) | flatten }}"
+    state: absent
+  retries: 3
+  delay: 5
+  loop: "{{ vpc | list }}"
+  when: instances | community.general.json_query(querystr) | flatten | length > 0
+  vars:
+    querystr: "results[*].instances[?contains(placement.availability_zone, '{{ item }}')].instance_id"
+
+- name: Retrieve details for instance DNS record
+  community.aws.route53:
+    state: get
+    zone: "{{ privatednszone }}"
+    private_zone: yes
+    record: "{{ item.name }}.{{ privatednszone }}"
+    type: A
+  register: rec
+  loop: "{{ vm }}"
+
+- name: "Delete instance A record {{ item.set.record }} {{ item.set.value }}"
+  community.aws.route53:
+    state: absent
+    zone: "{{ privatednszone }}"
+    private_zone: yes
+    record: "{{ item.set.record }}"
+    ttl: "{{ item.set.ttl }}"
+    type: "{{ item.set.type }}"
+    value: "{{ item.set.value }}"
+  loop: "{{ rec.results }}"
+  when: item.set is defined and item.set | length > 0
+
+- name: "Include networking teardown"
+  include_tasks: destroy_net.yml
+  when: destroy_networking
+  loop: "{{ vpc | dict2items }}"
+  vars:
+    region: "{{ item.key }}"
+    vpc_data: "{{ item.value }}"

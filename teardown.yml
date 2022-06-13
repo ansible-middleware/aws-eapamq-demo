@@ -1,0 +1,8 @@
+- name: Terminate AWS VMs
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Terminate VMs on AWS.
+      include_role:
+        name: 'aws'
+        tasks_from: destroy.yml
