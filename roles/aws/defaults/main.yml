@@ -49,12 +49,12 @@ security_groups:
           from_port: '6666'
           to_port: '6666'
           proto: tcp
-          cidr_ip: 10.0.1.16/28
+          cidr_ip: 10.0.3.16/28
         - rule_desc: "modcluster - site2"
           from_port: '6666'
           to_port: '6666'
           proto: tcp
-          cidr_ip: 10.0.2.16/28
+          cidr_ip: 10.0.4.16/28
     - name: datagrid
       description: Ingress rules for DataGrid
       rules:
@@ -67,22 +67,22 @@ security_groups:
           from_port: '7800'
           to_port: '7801'
           proto: tcp
-          cidr_ip: 10.0.1.16/28
+          cidr_ip: 10.0.3.16/28
         - rule_desc: 'jgroups - site2 - DataGrid'
           from_port: '7800'
           to_port: '7801'
           proto: tcp
-          cidr_ip: 10.0.2.16/28
+          cidr_ip: 10.0.4.16/28
         - rule_desc: 'rest - site1 - DataGrid'
           from_port: '11222'
           to_port: '11222'
           proto: tcp
-          cidr_ip: 10.0.1.16/28
+          cidr_ip: 10.0.3.16/28
         - rule_desc: 'rest - site2- DataGrid'
           from_port: '11222'
           to_port: '11222'
           proto: tcp
-          cidr_ip: 10.0.2.16/28
+          cidr_ip: 10.0.4.16/28
     - name: amq
       description: Ingress rules for AMQ Broker
       rules:
@@ -91,7 +91,7 @@ security_groups:
           to_port: '22'
           proto: tcp
           cidr_ip: 0.0.0.0/0
-        - rule_desc: 'http - Single Sign-on'
+        - rule_desc: 'http - jolokia'
           from_port: '8080'
           to_port: '8080'
           proto: tcp
@@ -105,17 +105,27 @@ security_groups:
           from_port: '5672'
           to_port: '5672'
           proto: tcp
-          cidr_ip: 10.0.1.16/28          
+          cidr_ip: 10.0.0.0/16
         - rule_desc: 'amq - mqtt'
           from_port: '1883'
           to_port: '1883'
           proto: tcp
-          cidr_ip: 10.0.1.16/28
+          cidr_ip: 10.0.0.0/16
         - rule_desc: 'amq - stomp'
           from_port: '61613'
           to_port: '61613'
           proto: tcp
-          cidr_ip: 10.0.2.16/28
+          cidr_ip: 10.0.0.0/16
+        - rule_desc: 'jgroups - site1 - AMQ'
+          from_port: '7600'
+          to_port: '7601'
+          proto: tcp
+          cidr_ip: 10.0.3.16/28
+        - rule_desc: 'jgroups - site2 - AMQ'
+          from_port: '7600'
+          to_port: '7601'
+          proto: tcp
+          cidr_ip: 10.0.4.16/28
     - name: eap
       description: Ingress rules for EAP
       rules:
@@ -124,26 +134,26 @@ security_groups:
           to_port: '22'
           proto: tcp
           cidr_ip: 0.0.0.0/0
-        - rule_desc: 'http - Single Sign-on'
+        - rule_desc: 'http - EAP'
           from_port: '8080'
           to_port: '8080'
           proto: tcp
           cidr_ip: 10.0.0.0/16
-        - rule_desc: 'ajp - Single Sign-on'
+        - rule_desc: 'ajp - EAP'
           from_port: '8009'
           to_port: '8009'
           proto: tcp
           cidr_ip: 10.0.0.0/16
-        - rule_desc: 'jgroups - site1 - Single Sign-on'
+        - rule_desc: 'jgroups - site1 - EAP'
           from_port: '7600'
           to_port: '7601'
           proto: tcp
-          cidr_ip: 10.0.1.16/28
-        - rule_desc: 'jgroups - site2 - Single Sign-on'
+          cidr_ip: 10.0.3.16/28
+        - rule_desc: 'jgroups - site2 - EAP'
           from_port: '7600'
           to_port: '7601'
           proto: tcp
-          cidr_ip: 10.0.2.16/28          
+          cidr_ip: 10.0.4.16/28
 vm:
   - name: 'site1-loadbalancer'
     site: 'site1'

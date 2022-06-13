@@ -1,0 +1,8 @@
+{ "standard-sockets" => {
+  "remote-destination-outbound-socket-binding" => {
+    "proxy1" => {
+      "host" => "site1-loadbalancer.internal.ansiblemiddleware.com", "port" =>  6666,
+      }
+    }
+  }
+}

@@ -16,12 +16,23 @@
       get_url:
         url: "{{ app.url }}"
         dest: "{{ wildfly_install_workdir }}/{{ app.name }}"
-    - set_fact:
+    - name: "Set info app destination"
+      set_fact:
         info_app_dest: "{{ wildfly_install_workdir }}/{{ app.name }}"
-    - name: "Fine tuning configuration: {{ install_name }}"
+    - name: "Fine tuning configuration"
       jcliff:
         wfly_home: "{{ wildfly_home }}"
+        rule_file: "files/jcliff/{{ hostvars[inventory_hostname].tags.Site }}"
+        timeout: 7000
         components:
+          - system_properties:
+            - name: JBOSS_ID
+              value: "{{ inventory_hostname }}"
           - deployments:
-              - name: "{{ info_app_dest | basename }}"
-                path: "{{ info_app_dest }}"
+            - name: "{{ info_app_dest | basename }}"
+              path: "{{ info_app_dest }}"
+          - modcluster:
+              proxy:
+                - name: default
+                  proxies:
+                    - proxy1
