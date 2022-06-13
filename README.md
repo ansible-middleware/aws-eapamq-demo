@@ -21,12 +21,6 @@ The final architecture looks like:
 
 `ansible-galaxy collection install -r requirements.yml`
 
-### Database options
-
-* We have provided two options: 
-    1. For managed mariadb on Azure set `managed_mariadb` as true in `create-demo-setup.yml`.
-    2. For unmanaged mariadb on Azure set `managed_mariadb` as false in `create-demo-setup.yml`. This will create the RHEL instances and configure mariadb using 'mariadb' role on cross-dc-rhsso-demo.
-
 ## Running on AWS cloud
 
 ### Infrastracture

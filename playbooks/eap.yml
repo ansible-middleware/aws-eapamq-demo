@@ -1,0 +1,27 @@
+---
+- name: "EAP installation and configuration"
+  hosts: eap
+  become: yes
+  collections:
+    - middleware_automation.redhat_csp_download
+    - middleware_automation.wildfly
+    - middleware_automation.jcliff
+  roles:
+    - redhat_csp_download
+    - jcliff
+    - wildfly_install
+    - wildfly_systemd
+  tasks:
+    - name: "Ensures webapp {{ app.name }} has been retrieved from {{ app.url }}"
+      get_url:
+        url: "{{ app.url }}"
+        dest: "{{ wildfly_install_workdir }}/{{ app.name }}"
+    - set_fact:
+        info_app_dest: "{{ wildfly_install_workdir }}/{{ app.name }}"
+    - name: "Fine tuning configuration: {{ install_name }}"
+      jcliff:
+        wfly_home: "{{ wildfly_home }}"
+        components:
+          - deployments:
+              - name: "{{ info_app_dest | basename }}"
+                path: "{{ info_app_dest }}"

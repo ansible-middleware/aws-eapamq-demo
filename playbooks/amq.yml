@@ -1,0 +1,11 @@
+---
+- name: Deploy AMQ broker
+  hosts: amq
+  gather_facts: yes
+  become: yes
+  collections:
+    - middleware_automation.redhat_csp_download
+    - middleware_automation.amq
+  roles:
+    - redhat_csp_download    
+    - amq_broker

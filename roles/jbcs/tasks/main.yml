@@ -1,0 +1,43 @@
+---
+- include_tasks: prereqs.yml
+
+- name: configure firewall for JBCS ports
+  become: yes
+  firewalld:
+    port: "{{ port }}"
+    permanent: true
+    state: enabled
+    immediate: yes
+  loop:
+    - "80/tcp"
+    - "443/tcp"
+    - "6666/tcp"
+  loop_control:
+    loop_var: port
+
+- include_tasks: install-jb-httpd.yml
+- include_tasks: ssl.yml
+
+- name: "Start HTTPd Service"
+  service:
+    name: jbcs-httpd24-httpd.service
+    state: started
+    enabled: yes
+
+- name: "Wait for all used ports to be open"
+  wait_for:
+    port: "{{ item }}"
+    delay: 0
+  loop:
+    - 80
+    - 443
+    - 6666
+  when:
+    - check_jbcs_port is defined
+
+- name: "Ensures mod_cluster configuration is deployed"
+  template:
+    src: templates/mod_cluster.conf.j2
+    dest: "{{ httpd.home }}/httpd/conf.d/mod_cluster.conf"
+  notify:
+    - 'expire mod_cluster cache and restart'

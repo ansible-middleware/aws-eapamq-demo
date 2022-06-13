@@ -2,9 +2,6 @@
   hosts: localhost
   gather_facts: false
   connection: local
-  vars:
-    repo_url: "https://github.com/ansible-middleware/cross-dc-rhsso-demo.git"
-    branch: aws
   tasks:
     - name: Create demo resources on aws
       include_role:

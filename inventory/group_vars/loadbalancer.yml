@@ -1,0 +1,17 @@
+---
+httpd_ssl: yes
+jbcs_bundle: jbcs-httpd24-httpd-2.4.37-SP11-RHEL8-x86_64.zip
+zip_file_repo: /opt/apps
+httpd:
+  bind_address: "localhost"
+  listen_port: "80"
+  mod_cluster:
+    port: 6666
+    require: "all granted"
+  home: /opt/jbcs/jbcs-httpd24-2.4/
+  user:
+    name: apache
+  group:
+    name: apache
+    id: 48
+

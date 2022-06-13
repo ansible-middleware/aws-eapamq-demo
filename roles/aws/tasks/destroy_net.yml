@@ -4,8 +4,8 @@
     region: "{{ region }}"
     filters:
       "tag:Name": "{{ vpc_data.name }}"
-      "tag:Environment": "crossdc-rhsso-demo"
-      "tag:Application": "rhsso"
+      "tag:Environment": "eap-amq-demo"
+      "tag:Application": "eap-amq-integration"
       "tag:Created-By": "ansible"
   register: vpc_info
 

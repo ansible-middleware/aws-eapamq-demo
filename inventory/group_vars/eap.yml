@@ -1,0 +1,7 @@
+---
+wildfly_install_workdir: /opt/
+wildfly_config_base: standalone-ha.xml
+wildfly_home: /opt/jboss-eap-7.4/
+app:
+  name: 'info-1.1.war'
+  url: 'https://drive.google.com/uc?export=download&id=1w9ss5okctnjUvRAxhPEPyC7DmbUwmbhb'

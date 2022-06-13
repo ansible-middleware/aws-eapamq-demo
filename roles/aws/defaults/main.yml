@@ -96,19 +96,24 @@ security_groups:
           to_port: '8080'
           proto: tcp
           cidr_ip: 10.0.0.0/16
-        - rule_desc: 'ajp - Single Sign-on'
-          from_port: '8009'
-          to_port: '8009'
+        - rule_desc: 'amq - all protocols'
+          from_port: '61616'
+          to_port: '61616'
           proto: tcp
           cidr_ip: 10.0.0.0/16
-        - rule_desc: 'jgroups - site1 - Single Sign-on'
-          from_port: '7600'
-          to_port: '7601'
+        - rule_desc: 'amq - amqp'
+          from_port: '5672'
+          to_port: '5672'
+          proto: tcp
+          cidr_ip: 10.0.1.16/28          
+        - rule_desc: 'amq - mqtt'
+          from_port: '1883'
+          to_port: '1883'
           proto: tcp
           cidr_ip: 10.0.1.16/28
-        - rule_desc: 'jgroups - site2 - Single Sign-on'
-          from_port: '7600'
-          to_port: '7601'
+        - rule_desc: 'amq - stomp'
+          from_port: '61613'
+          to_port: '61613'
           proto: tcp
           cidr_ip: 10.0.2.16/28
     - name: eap

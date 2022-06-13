@@ -56,16 +56,6 @@ argument_specs:
                 required: true
                 description: "The relative DNS name provided by this Traffic Manager profile."
                 type: "str"
-            record_type:
-                # line 44 of aws/defaults/main.yml
-                required: true
-                description: "The type of record set to create or delete."
-                type: "str"
-            entry:
-                # line 45 of aws/defaults/main.yml
-                required: true
-                description: "Primary data value for all record types."
-                type: "str"
             dns_name:
                 # line 46 of aws/defaults/main.yml
                 required: false
@@ -81,46 +71,6 @@ argument_specs:
                 required: true
                 description: "Dictionary to get the details of VM created for the intance"
                 type: "list"
-            db:
-                # line 144 of aws/defaults/main.yml
-                required: true
-                description: "Dictionary to get the details of Database"
-                type: "list"
-            db_sku_name:
-                # line 167 of aws/defaults/main.yml
-                required: true
-                description: "The name of the SKU, typically, tier + family + cores, for example B_Gen4_1, GP_Gen5_8."
-                type: "str"
-            db_sku_tier:
-                # line 168 of aws/defaults/main.yml
-                required: true
-                description: "The tier of the particular SKU."
-                type: "str"
-            db_storage_mb:
-                # line 169 of aws/defaults/main.yml
-                required: true
-                description: "The size code, to be interpreted by resource as appropriate."
-                type: "str"
-            db_enforce_ssl:
-                # line 170 of aws/defaults/main.yml
-                default: true
-                description: "Enable SSL enforcement."
-                type: "bool"
-            db_version:
-                # line 171 of aws/defaults/main.yml
-                required: true
-                description: "Maria DB server version"
-                type: "str"
-            db_admin_username:
-                # line 172 of aws/defaults/main.yml
-                required: true
-                description: "Maria DB username"
-                type: "str"
-            db_admin_password:
-                # line 173 of aws/defaults/main.yml
-                required: true
-                description: "Maria DB password"
-                type: "str"
             managed_mariadb:
                 required: true
                 description: "Choice of using managed MariaDB"

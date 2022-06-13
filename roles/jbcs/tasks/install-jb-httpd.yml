@@ -1,0 +1,138 @@
+---
+- assert:
+    that:
+      - httpd is defined
+      - httpd.user is defined
+      - httpd.user.name is defined
+      - httpd.group is defined
+      - httpd.group.name is defined
+      - httpd.home is defined
+    quiet: true
+
+- group:
+    name: "{{ httpd.group.name }}"
+    state: present
+    gid: "{{ httpd.group.id | default(omit) }}"
+    system: true
+
+- user:
+    name: "{{ httpd.user.name }}"
+    group: "{{ httpd.group.name }}"
+    home: /opt/jbcs/
+    state: present
+    uid: "{{ httpd.user.id | default(omit) }}"
+    system: true
+
+- file:
+    path: /opt/jbcs/
+    owner: "{{ httpd.user.name }}"
+    group: "{{ httpd.group.name }}"
+    recurse: true
+  changed_when: false
+
+- file:
+    path: "{{ zip_file_repo }}"
+    owner: "{{ httpd.user.name }}"
+    group: "{{ httpd.group.name }}"
+    mode: 0750
+    state: directory
+
+## check remote archive
+- name: Set download archive path
+  ansible.builtin.set_fact:
+    archive: "{{ zip_file_repo }}/{{ jbcs_bundle }}"
+
+- name: Check download archive path
+  become: yes
+  ansible.builtin.stat:
+    path: "{{ archive }}"
+  register: archive_path
+
+## download to controller
+- name: Check local download archive path
+  ansible.builtin.stat:
+    path: "{{ lookup('env', 'PWD') }}"
+  register: local_path
+  delegate_to: localhost
+
+- name: Check downloaded archive
+  ansible.builtin.stat:
+    path: "{{ local_path.stat.path }}/{{ jbcs_bundle }}"
+  register: local_archive_path
+  delegate_to: localhost
+
+- name: Download JBoss Core Services from CSP
+  redhat_csp_download:
+    url: "https://access.redhat.com/jbossnetwork/restricted/softwareDownload.html?softwareId=104386&product=core.service.apachehttp"
+    dest: "{{ zip_file_repo }}/{{ jbcs_bundle }}"
+    username: "{{ rhn_username }}"
+    password: "{{ rhn_password }}"
+  no_log: "{{ omit_rhn_output | default(true) }}"
+  delegate_to: localhost    
+  when:
+    - not jbcs_installed is defined
+    - archive_path is defined
+    - archive_path.stat is defined
+    - not archive_path.stat.exists
+    - local_archive_path.stat is defined
+    - not local_archive_path.stat.exists
+
+- name: Check downloaded archive
+  ansible.builtin.stat:
+    path: "{{ local_path.stat.path }}/{{ jbcs_bundle }}"
+  register: local_archive_path
+  delegate_to: localhost
+
+## copy and unpack
+- name: Copy archive to target nodes
+  ansible.builtin.copy:
+    src: "{{ local_path.stat.path }}/{{ jbcs_bundle }}"
+    dest: "{{ archive }}"
+    owner: "{{ httpd.user.name }}"
+    group: "{{ httpd.group.name }}"
+    mode: 0640
+  register: new_version_downloaded
+  when:
+    - not archive_path.stat.exists
+    - local_archive_path.stat is defined
+    - local_archive_path.stat.exists
+  become: yes
+
+- name: "Check target directory: {{ httpd.home }}"
+  ansible.builtin.stat:
+    path: "{{ httpd.home }}"
+  register: path_to_workdir
+  become: yes
+
+- name: "Extract JBCS archive on target"
+  ansible.builtin.unarchive:
+    remote_src: yes
+    src: "{{ archive }}"
+    dest: /opt/jbcs/
+    creates: "{{ httpd.home }}"
+    owner: "{{ httpd.user.name }}"
+    group: "{{ httpd.group.name }}"
+  become: yes
+  when:
+    - new_version_downloaded.changed or not path_to_workdir.stat.exists
+  notify:
+    - Restart JBCS
+
+- name: Inform decompression was not executed
+  ansible.builtin.debug:
+    msg: "{{ httpd.home }} already exists and version unchanged, skipping decompression"
+  when:
+    - not new_version_downloaded.changed and path_to_workdir.stat.exists
+
+- name: "Post install HTTPD"
+  command:
+    cmd: "{{ httpd.home }}/httpd/.postinstall.systemd"
+    chdir: "{{ httpd.home }}/httpd/"
+    creates: /usr/lib/systemd/system/jbcs-httpd24-httpd.service
+
+- name: "Ensures JBCS configuration is correct"
+  template:
+    src: templates/httpd.conf.j2
+    dest: "{{ httpd.home }}/httpd/conf/httpd.conf"
+  notify:
+    - "Restart JBCS"

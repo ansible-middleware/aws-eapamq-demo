@@ -3,7 +3,7 @@
   ec2_instance_info:
     region: "{{ item }}"
     filters:
-      "tag:Environment": crossdc-rhsso-demo
+      "tag:Environment": eap-amq-demo
       instance-state-name: [ "running", "pending" ]
   register: instances
   loop: "{{ vpc | list }}"

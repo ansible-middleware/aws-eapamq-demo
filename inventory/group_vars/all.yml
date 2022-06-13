@@ -1,0 +1,5 @@
+---
+rh_no_log: True
+jvm_package: java-11-openjdk-headless
+domain_name: '.internal.ansiblemiddleware.com'
+external_domain_name: 'eapamq.awsdemos.ansiblemiddleware.com'

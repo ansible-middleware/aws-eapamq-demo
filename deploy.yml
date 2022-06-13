@@ -1,8 +1,10 @@
-- name: Refresh inventory and roles git repo
-  hosts: localhost
-  gather_facts: false
-  connection: local
+---
+- import_playbook: playbooks/prerequisites.yml
 
-- import_playbook: cross-dc-rhsso-demo/playbooks/all.yml
+- import_playbook: playbooks/loadbalancer.yml
   vars:
-    tls_certs_lookup_path: "../../files/"
+    tls_certs_lookup_path: "../files/"
+
+- import_playbook: playbooks/amq.yml
+
+- import_playbook: playbooks/eap.yml

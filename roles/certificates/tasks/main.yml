@@ -1,0 +1,64 @@
+---
+- name: Install CA in shared truststore
+  copy:
+    src: my-root-ca.crt.pem
+    dest: /usr/share/pki/ca-trust-source/anchors/
+    owner: root
+    group: root
+    mode: 0444    
+  become: true
+  when: install_trust_ca
+  notify:
+    - update_ca_trust
+
+- name: Install keystore
+  copy:
+    src: keystore.jks
+    dest: "{{ jdg_keystore_path }}"
+    owner: root
+    group: root
+    mode: 0444
+  become: true
+  when: install_keystore
+  notify:
+    - update_ca_trust
+
+- name: Retrive trusted CAs and add own CA if not present
+  command: keytool -list -keystore /etc/pki/java/cacerts -storepass changeit
+  register: cacerts
+  become: true
+  changed_when: ca_cn not in cacerts.stdout
+  notify:
+    - update_ca_trust
+
+- name: Install public certificate
+  block:
+    - copy:
+        src: "{{ tls_certs_lookup_path }}{{ external_domain_name }}.crt"
+        dest: "/etc/pki/tls/certs/{{ external_domain_name }}.crt"
+        owner: root
+        group: root
+        mode: 0444
+      become: true
+      delegate_to: "{{ item }}"
+      run_once: True
+      loop: "{{ groups['loadbalancer'] }}"
+  rescue:
+    - debug:
+        msg: "External service name TLS certificate not found"
+
+- name: Install public certificate
+  block:
+    - copy:
+        src: "{{ tls_certs_lookup_path }}{{ external_domain_name }}.key"
+        dest: "/etc/pki/tls/private/{{ external_domain_name }}.key"
+        owner: root
+        group: root
+        mode: 0444
+      become: true
+      run_once: True
+      delegate_to: "{{ item }}"
+      loop: "{{ groups['loadbalancer'] }}"
+  rescue:
+    - debug:
+        msg: "External service name TLS private key not found"
