@@ -1,0 +1,6 @@
+*.log
+rhn-creds.yml
+*.zip
+test.yml
+*.crt
+*.key
