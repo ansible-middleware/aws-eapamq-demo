@@ -1,6 +1,6 @@
 ---
 wildfly_install_workdir: /opt/
-wildfly_config_base: standalone-ha.xml
+wildfly_config_base: standalone-full-ha.xml
 wildfly_home: /opt/jboss-eap-7.4/
 wildfly_instance_name: "{{ inventory_hostname }}"
 app:

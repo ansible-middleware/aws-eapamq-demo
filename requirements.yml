@@ -8,6 +8,8 @@ collections:
     version: ">=0.0.2"
   - name: middleware_automation.wildfly
     version: ">=1.0.4"
+  - name: middleware_automation.jcliff
+    version: ">=0.0.22"
   - name: community.general
   - name: community.mysql
   - name: ansible.netcommon

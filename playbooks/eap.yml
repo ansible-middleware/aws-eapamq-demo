@@ -19,6 +19,42 @@
     - name: "Set info app destination"
       set_fact:
         info_app_dest: "{{ wildfly_install_workdir }}/{{ app.name }}"
+    - name: Set jgroups stack to TCP
+      include_role:
+        name: wildfly_utils
+        tasks_from: jboss_cli.yml
+      vars:
+        query: /subsystem=jgroups/channel=ee:write-attribute(name=stack,value=tcp)
+        jboss_home: /opt/jboss-eap-7.4/
+        jboss_cli_controller_host: localhost
+        jboss_cli_controller_port: 9990
+    # - name: Add messaging extension
+    #   include_role:
+    #     name: wildfly_utils
+    #     tasks_from: jboss_cli.yml
+    #   vars:
+    #     query: /extension=org.wildfly.extension.messaging-activemq:add
+    #     jboss_home: /opt/jboss-eap-7.4/
+    #     jboss_cli_controller_host: localhost
+    #     jboss_cli_controller_port: 9990
+    # - name: Add messaging subsystem
+    #   include_role:
+    #     name: wildfly_utils
+    #     tasks_from: jboss_cli.yml
+    #   vars:
+    #     query: /subsystem=messaging-activemq:add
+    #     jboss_home: /opt/jboss-eap-7.4/
+    #     jboss_cli_controller_host: localhost
+    #     jboss_cli_controller_port: 9990
+    # - name: Add messaging subsystem server
+    #   include_role:
+    #     name: wildfly_utils
+    #     tasks_from: jboss_cli.yml
+    #   vars:
+    #     query: /subsystem=messaging-activemq/server=default:add
+    #     jboss_home: /opt/jboss-eap-7.4/
+    #     jboss_cli_controller_host: localhost
+    #     jboss_cli_controller_port: 9990
     - name: "Fine tuning configuration"
       jcliff:
         wfly_home: "{{ wildfly_home }}"
@@ -36,3 +72,13 @@
                 - name: default
                   proxies:
                     - proxy1
+          - messaging_activemq:
+              remote_connector:
+                - name: netty-remote-broker
+                  socket_binding: messaging-external-broker
+              connection_factory:
+                - name: activemq-ra-remote
+                  connectors: netty-remote-broker
+                  entries:
+                    - java:/RemoteJmsXA
+                    - java:jboss/RemoteJmsXA'

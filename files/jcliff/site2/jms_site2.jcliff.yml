@@ -1,0 +1,8 @@
+{ "standard-sockets" => {
+  "remote-destination-outbound-socket-binding" => {
+    "messaging-external-broker" => {
+      "host" => "site2-amq1.internal.ansiblemiddleware.com", "port" =>  61616,
+      }
+    }
+  }
+}
