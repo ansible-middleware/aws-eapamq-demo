@@ -4,3 +4,5 @@ jmespath
 psycopg
 boto3
 botocore
+libselinux-python
+libsemanage-python
