@@ -30,13 +30,14 @@
     filters:
       "tag:Name": "{{ instance.name }}"
       instance-state-name: [ "running", "pending" ]
-  retries: 3
-  delay: 10
-  until: running_instance.instances[0].private_ip_address is defined
+  retries: 10
+  delay: 5
+  until: running_instance.instances[0].private_ip_address is defined and (running_instance.instances[0].public_ip_address is defined or instance.role != 'loadbalancer')
   register: running_instance
 
 - set_fact:
     private_ip: "{{ running_instance.instances[0].private_ip_address }}"
+    public_ip: "{{ running_instance.instances[0].public_ip_address | default('') }}"
     vm_result: "{{ vm_result + [{
       'name': instance.name,
       'site': instance.site,
@@ -61,3 +62,18 @@
     overwrite: yes
   retries: 3
   delay: 5
+
+- name: "Add latency A record for {{ relative_name }}.{{ dns_name }} with public IP {{ public_ip }}"
+  route53:
+    state: present
+    identifier: "{{ instance.region }}-{{ instance.name }}"
+    region: "{{ instance.region }}"
+    zone: "{{ dns_name }}"
+    record: "{{ relative_name }}.{{ dns_name }}"
+    type: A
+    ttl: "{{ ttl }}"
+    value: "{{ public_ip }}"
+    overwrite: yes
+  retries: 3
+  delay: 5
+  when: "instance.role == 'loadbalancer'"
