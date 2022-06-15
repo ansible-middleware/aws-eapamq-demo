@@ -26,35 +26,14 @@
       vars:
         query: /subsystem=jgroups/channel=ee:write-attribute(name=stack,value=tcp)
         jboss_home: /opt/jboss-eap-7.4/
-        jboss_cli_controller_host: localhost
-        jboss_cli_controller_port: 9990
-    # - name: Add messaging extension
-    #   include_role:
-    #     name: wildfly_utils
-    #     tasks_from: jboss_cli.yml
-    #   vars:
-    #     query: /extension=org.wildfly.extension.messaging-activemq:add
-    #     jboss_home: /opt/jboss-eap-7.4/
-    #     jboss_cli_controller_host: localhost
-    #     jboss_cli_controller_port: 9990
-    # - name: Add messaging subsystem
-    #   include_role:
-    #     name: wildfly_utils
-    #     tasks_from: jboss_cli.yml
-    #   vars:
-    #     query: /subsystem=messaging-activemq:add
-    #     jboss_home: /opt/jboss-eap-7.4/
-    #     jboss_cli_controller_host: localhost
-    #     jboss_cli_controller_port: 9990
-    # - name: Add messaging subsystem server
-    #   include_role:
-    #     name: wildfly_utils
-    #     tasks_from: jboss_cli.yml
-    #   vars:
-    #     query: /subsystem=messaging-activemq/server=default:add
-    #     jboss_home: /opt/jboss-eap-7.4/
-    #     jboss_cli_controller_host: localhost
-    #     jboss_cli_controller_port: 9990
+    - name: Apply latest CP
+      include_role:
+        name: wildfly_utils
+        tasks_from: apply_cp.yml
+      vars:
+        wildfly_home: /opt/jboss-eap-7.4/
+        rhn_cp_id: "99481"
+        rhn_cp_v: "7.4.5"
     - name: "Fine tuning configuration"
       jcliff:
         wfly_home: "{{ wildfly_home }}"
