@@ -3,7 +3,7 @@
   hosts: all
   tasks:
     - name: "Install packages"
-      include_role:
+      ansible.builtin.include_role:
         name: fastpackages
       vars:
         packages_list:
@@ -14,3 +14,6 @@
           - ca-certificates
           - python3-lxml
           - "{{ jvm_package }}"
+    - name: "Set FQDN"
+      ansible.builtin.command: "hostnamectl set-hostname --static {{ inventory_hostname }}{{ domain_name }}"
+      become: yes

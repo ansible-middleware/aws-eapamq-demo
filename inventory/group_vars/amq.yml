@@ -1,6 +1,6 @@
 ---
 amq_broker_ha_enabled: True
 amq_broker_disable_hornetq_protocol: True
-amq_broker_disable_mqtt_protocol: True
+amq_broker_disable_mqtt_protocol: False
 amq_broker_shared_storage: True
 amq_broker_configure_firewalld: True

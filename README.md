@@ -4,7 +4,7 @@ This repository contains reference configurations that can create resourses on A
 
 The final architecture looks like:
 
-![Architecture diagram](./scenario.jpg)
+![Architecture diagram](./scenario.svg)
 
 
 ## Prerequisites
