@@ -11,12 +11,12 @@
     - amq_broker
   pre_tasks:
     - name: Install EFS mount helper
-      dnf:
+      ansible.builtin.dnf:
         name: https://cdn.amazonlinux.com/blobstore/6cf985afe1ec8f76369469cf866f97ba00943a5bbfd29e99b511068cb581d7ab/amazon-efs-utils-1.32.1-1.amzn2.noarch.rpm
         state: present
         disable_gpg_check: yes
     - name: Find and replace
-      lineinfile:
+      ansible.builtin.lineinfile:
         dest: /etc/amazon/efs/efs-utils.conf
         regexp: "^stunnel_check_cert_hostname"
         line: "stunnel_check_cert_hostname = false"
@@ -29,3 +29,11 @@
         opts: tls,mounttargetip=10.0.3.36
         state: mounted
         fstype: efs
+  post_tasks:
+    - name: Configure promtail
+      ansible.builtin.include_role:
+        name: promtail
+      vars:
+        promtail_job_name: amq
+        promtail_logfile: /var/log/amq_broker/amq-broker/artemis.log
+        promtail_region: "{{ hostvars[inventory_hostname].placement.region }}"

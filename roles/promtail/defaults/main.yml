@@ -1,0 +1,8 @@
+---
+promtail_directory: /opt/promtail
+promtail_loki_url: http://grafana.internal.ansiblemiddleware.com:3100/loki/api/v1/push
+promtail_job_name: default
+promtail_logfile: /var/log/messages
+promtail_region: us-east-1
+promtail_host: "{{ inventory_hostname }}"
+promtail_version: 2.5.0

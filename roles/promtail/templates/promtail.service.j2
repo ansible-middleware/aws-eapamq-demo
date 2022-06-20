@@ -1,0 +1,19 @@
+# {{ansible_managed}}
+
+[Unit]
+Description=promtail service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory={{ promtail_directory }}
+ExecStartPre=/bin/sleep 3
+ExecStart={{ promtail_directory }}/promtail-linux-amd64 -config.file {{ promtail_directory }}/promtail.yml
+SuccessExitStatus=143
+TimeoutStopSec=10
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+

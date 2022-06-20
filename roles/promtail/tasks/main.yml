@@ -1,0 +1,55 @@
+---
+- name: Ensure unzip is installed
+  dnf:
+    name: unzip
+    state: present
+
+- name: Setup promtail data directory
+  file:
+    state: directory
+    dest: "{{ promtail_directory }}"
+    owner: root
+    group: root
+    mode: 0750
+
+- name: Fetch promtail binary
+  get_url:
+    url: "https://github.com/grafana/loki/releases/download/v{{ promtail_version }}/promtail-linux-amd64.zip"
+    dest: "{{ promtail_directory }}/"
+  register: new_archive
+
+- name: Unarchive promtail
+  unarchive:
+    src: "{{ promtail_directory }}/promtail-linux-amd64.zip"
+    dest: "{{ promtail_directory }}/"
+    copy: no
+  when: new_archive.changed
+  notify:
+    - restart promtail
+
+- name: Grant exec bit to promtail binary
+  file:
+    dest: "{{ promtail_directory }}/promtail-linux-amd64"
+    mode: a+x
+  when: new_archive.changed
+
+- name: Setup promtail systemd unit
+  template:
+    dest: "/etc/systemd/system/promtail.service"
+    src: promtail.service.j2
+    owner: root
+    group: root
+    mode: 0444
+  notify:
+    - systemd reload
+    - restart promtail
+
+- name: Configure promtail
+  template:
+    dest: '{{ promtail_directory }}/promtail.yml'
+    src: 'promtail.yml.j2'
+    owner: root
+    group: root
+    mode: 0440
+  notify:
+    - restart promtail
