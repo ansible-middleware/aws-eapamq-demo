@@ -52,6 +52,29 @@
                   entries:
                     - java:/RemoteJmsXA
                     - java:jboss/RemoteJmsXA'
+    - name: Create cluster node list
+      set_fact:
+        eap_cluster_nodes: >
+          {{ eap_cluster_nodes | default([]) + [
+               {
+                 "name": inventory_hostname,
+                 "address": 'jgroups-' + item,
+                 "inventory_host": item,
+                 "value": hostvars[item].ansible_default_ipv4.address | default(item)
+               }
+             ] }}
+      loop: "{{ ansible_play_batch }}"
+    - name: "copy jgroups template"
+      template:
+        src: "../files/jgroups-jboss-cli.j2"
+        dest: "/tmp/jgroups-jboss-cli"
+    - name: "Execute CLI for jgroups"
+      ansible.builtin.command: >
+        {{ wildfly_home + '/bin/jboss-cli.sh' }} -c --output-json --file=/tmp/jgroups-jboss-cli --controller=localhost:9990
+      changed_when: false
+      become: yes
+      retries: 3
+      delay: 5
   post_tasks:
     - name: Configure promtail
       ansible.builtin.include_role:

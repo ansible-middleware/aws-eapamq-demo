@@ -1,0 +1,22 @@
+{% for node in eap_cluster_nodes %}
+/socket-binding-group=standard-sockets/remote-destination-outbound-socket-binding={{ node.address }}:add(host={{ node.value }},port=7600)
+{% endfor %}
+batch
+# Add the tcpping stack
+/subsystem=jgroups/stack=tcpping:add
+/subsystem=jgroups/stack=tcpping/transport=TCP:add(socket-binding=jgroups-tcp)
+/subsystem=jgroups/stack=tcpping/protocol=TCPPING:add(socket-bindings=[{{ eap_cluster_nodes | map(attribute='address') | join (',') }}])
+/subsystem=jgroups/stack=tcpping/protocol=MERGE3:add
+/subsystem=jgroups/stack=tcpping/protocol=FD_SOCK:add
+/subsystem=jgroups/stack=tcpping/protocol=FD_ALL:add
+/subsystem=jgroups/stack=tcpping/protocol=VERIFY_SUSPECT:add
+/subsystem=jgroups/stack=tcpping/protocol=pbcast.NAKACK2:add
+/subsystem=jgroups/stack=tcpping/protocol=UNICAST3:add
+/subsystem=jgroups/stack=tcpping/protocol=pbcast.STABLE:add
+/subsystem=jgroups/stack=tcpping/protocol=pbcast.GMS:add
+/subsystem=jgroups/stack=tcpping/protocol=MFC:add
+/subsystem=jgroups/stack=tcpping/protocol=FRAG3:add
+# Set tcpping as the stack for the ee channel
+/subsystem=jgroups/channel=ee:write-attribute(name=stack,value=tcpping)
+run-batch
+reload
