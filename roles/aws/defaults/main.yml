@@ -144,6 +144,11 @@ security_groups:
           to_port: '8009'
           proto: tcp
           cidr_ip: 10.0.0.0/16
+        - rule_desc: 'jgroups - multicast TCP'
+          from_port: '45700'
+          to_port: '45700'
+          proto: tcp
+          cidr_ip: 10.0.0.0/16
         - rule_desc: 'jgroups - site1 - EAP'
           from_port: '7600'
           to_port: '7601'

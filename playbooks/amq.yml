@@ -9,3 +9,16 @@
   roles:
     - redhat_csp_download    
     - amq_broker
+  pre_tasks:
+    - name: Install EFS mount helper
+      dnf:
+        name: https://cdn.amazonlinux.com/blobstore/6cf985afe1ec8f76369469cf866f97ba00943a5bbfd29e99b511068cb581d7ab/amazon-efs-utils-1.32.1-1.amzn2.noarch.rpm
+        state: present
+    - name: Mount an NFS volume
+      ansible.posix.mount:
+        src: eap-amq-efs.internal.ansiblemiddleware.com:/amq-broker
+        path: /opt/amq/amq-broker/data/shared
+        opts: tls,mounttargetip=10.0.3.30
+        state: mounted
+        fstype: efs
+      notify: restart amq_broker
