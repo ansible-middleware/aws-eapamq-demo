@@ -14,11 +14,18 @@
       dnf:
         name: https://cdn.amazonlinux.com/blobstore/6cf985afe1ec8f76369469cf866f97ba00943a5bbfd29e99b511068cb581d7ab/amazon-efs-utils-1.32.1-1.amzn2.noarch.rpm
         state: present
+        disable_gpg_check: yes
+    - name: Find and replace
+      lineinfile:
+        dest: /etc/amazon/efs/efs-utils.conf
+        regexp: "^stunnel_check_cert_hostname"
+        line: "stunnel_check_cert_hostname = false"
+        backrefs: yes
+        state: present
     - name: Mount an NFS volume
       ansible.posix.mount:
-        src: eap-amq-efs.internal.ansiblemiddleware.com:/amq-broker
+        src: fs-0d3d3c1797c09b6f8:/
         path: /opt/amq/amq-broker/data/shared
-        opts: tls,mounttargetip=10.0.3.30
+        opts: tls,mounttargetip=10.0.3.36
         state: mounted
         fstype: efs
-      notify: restart amq_broker
