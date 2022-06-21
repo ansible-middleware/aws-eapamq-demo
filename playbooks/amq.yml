@@ -10,25 +10,17 @@
     - redhat_csp_download    
     - amq_broker
   pre_tasks:
-    - name: Install EFS mount helper
+    - name: Install NFS utils
       ansible.builtin.dnf:
-        name: https://cdn.amazonlinux.com/blobstore/6cf985afe1ec8f76369469cf866f97ba00943a5bbfd29e99b511068cb581d7ab/amazon-efs-utils-1.32.1-1.amzn2.noarch.rpm
-        state: present
-        disable_gpg_check: yes
-    - name: Find and replace
-      ansible.builtin.lineinfile:
-        dest: /etc/amazon/efs/efs-utils.conf
-        regexp: "^stunnel_check_cert_hostname"
-        line: "stunnel_check_cert_hostname = false"
-        backrefs: yes
+        name: nfs-utils
         state: present
     - name: Mount an NFS volume
       ansible.posix.mount:
-        src: fs-0d3d3c1797c09b6f8:/
+        src: "{{ amq_efs_mount }}:/"
         path: /opt/amq/amq-broker/data/shared
-        opts: tls,mounttargetip=10.0.3.36
+        opts: nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport
         state: mounted
-        fstype: efs
+        fstype: nfs
   post_tasks:
     - name: Configure promtail
       ansible.builtin.include_role:

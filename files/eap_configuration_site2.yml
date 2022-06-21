@@ -1,0 +1,68 @@
+wildfly-configuration:
+  socket-binding-group:
+    standard-sockets:
+      remote-destination-outbound-socket-binding:
+        site2-loadbalancer:
+          host: site2-loadbalancer.internal.ansiblemiddleware.com
+          port: 6666
+      remote-destination-outbound-socket-binding:
+        messaging-remote-site1-amq1:
+          host: site1-amq1
+          port: 61616
+      remote-destination-outbound-socket-binding:
+        messaging-remote-site1-amq2:
+          host: site1-amq2
+          port: 61616
+      remote-destination-outbound-socket-binding:
+        messaging-remote-site2-amq1:
+          host: site2-amq1
+          port: 61616
+      remote-destination-outbound-socket-binding:
+        messaging-remote-site2-amq2:
+          host: site2-amq2
+          port: 61616
+  subsystem:
+    modcluster:
+      proxy:
+        default:
+          proxies:
+            - site2-loadbalancer
+    messaging-activemq:
+      server:
+        default: !remove
+      remote-connector:
+        messaging-remote-site1-amq1-connector:
+          socket-binding: messaging-remote-site1-amq1
+      remote-connector:
+        messaging-remote-site1-amq2-connector:
+          socket-binding: messaging-remote-site1-amq2
+      remote-connector:
+        messaging-remote-site2-amq1-connector:
+          socket-binding: messaging-remote-site2-amq1
+      remote-connector:
+        messaging-remote-site2-amq2-connector:
+          socket-binding: messaging-remote-site2-amq2
+      pooled-connection-factory:
+        RemoteConnectionFactory:
+          connectors:
+            - messaging-remote-site1-amq1-connector
+            - messaging-remote-site1-amq2-connector
+            - messaging-remote-site2-amq1-connector
+            - messaging-remote-site2-amq2-connector
+          entries:
+            - "java:jboss/RemoteConnectionFactory"
+            - "java:jboss/exported/jms/RemoteConnectionFactory"
+            - "java:/RemoteJmsXA"
+            - "java:jboss/RemoteJmsXA"
+          enable-amq1-prefix: false
+          user: amq-cluster-user
+          password: amq-cluster-pass
+          ha: true
+          rebalance-connections: true
+          statistics-enabled: true
+    ejb3:
+      default-resource-adapter-name: RemoteConnectionFactory
+    ee:
+      service:
+        default-bindings:
+          jms-connection-factory: "java:jboss/RemoteConnectionFactory"

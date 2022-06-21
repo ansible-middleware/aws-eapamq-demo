@@ -21,7 +21,6 @@
     - name: "Fine tuning configuration"
       jcliff:
         wfly_home: "{{ wildfly_home }}"
-        rule_file: "files/jcliff/{{ hostvars[inventory_hostname].tags.Site }}"
         timeout: 7000
         components:
           - system_properties:
@@ -30,21 +29,6 @@
           - deployments:
             - name: "{{ info_app_dest | basename }}"
               path: "{{ info_app_dest }}"
-          - modcluster:
-              proxy:
-                - name: default
-                  proxies:
-                    - proxy1
-          - messaging_activemq:
-              remote_connector:
-                - name: netty-remote-broker
-                  socket_binding: messaging-external-broker
-              connection_factory:
-                - name: activemq-ra-remote
-                  connectors: netty-remote-broker
-                  entries:
-                    - java:/RemoteJmsXA
-                    - java:jboss/RemoteJmsXA'
     - name: Create cluster node list
       set_fact:
         eap_cluster_nodes: >
@@ -71,32 +55,32 @@
       retries: 3
       delay: 5
       until: cli_result.rc == 0
-    - name: Create AMQ cluster node list
-      set_fact:
-        amq_cluster_nodes: >
-          {{ amq_cluster_nodes | default([]) + [
-               {
-                 "name": item,
-                 "address": 'messaging-remote-' + item,
-                 "inventory_host": item + '-connector',
-                 "value": hostvars[item].ansible_default_ipv4.address | default(item)
-               }
-             ] }}
-      loop: "{{ groups['amq'] }}"
-    - name: "copy messaging template"
-      template:
-        src: "../files/messaging-jboss-cli.j2"
-        dest: "/tmp/messaging-jboss-cli"
-    - name: "Execute CLI for messaging"
-      ansible.builtin.command: >
-        {{ wildfly_home + '/bin/jboss-cli.sh' }} -c --output-json --file=/tmp/messaging-jboss-cli --controller=localhost:9990
-      changed_when: false
-      failed_when: "'WFLYCTL0212: Duplicate resource' not in cli_result.stdout"
-      register: cli_result
-      become: yes
-      retries: 3
-      delay: 5
-      until: cli_result.rc == 0
+    # - name: Create AMQ cluster node list
+    #   set_fact:
+    #     amq_cluster_nodes: >
+    #       {{ amq_cluster_nodes | default([]) + [
+    #            {
+    #              "name": item,
+    #              "address": 'messaging-remote-' + item,
+    #              "inventory_host": item + '-connector',
+    #              "value": hostvars[item].ansible_default_ipv4.address | default(item)
+    #            }
+    #          ] }}
+    #   loop: "{{ groups['amq'] }}"
+    # - name: "copy messaging template"
+    #   template:
+    #     src: "../files/messaging-jboss-cli.j2"
+    #     dest: "/tmp/messaging-jboss-cli"
+    # - name: "Execute CLI for messaging"
+    #   ansible.builtin.command: >
+    #     {{ wildfly_home + '/bin/jboss-cli.sh' }} -c --output-json --file=/tmp/messaging-jboss-cli --controller=localhost:9990
+    #   changed_when: false
+    #   failed_when: "'WFLYCTL0212: Duplicate resource' not in cli_result.stdout"
+    #   register: cli_result
+    #   become: yes
+    #   retries: 3
+    #   delay: 5
+    #   until: cli_result.rc == 0
   post_tasks:
     - name: Configure promtail
       ansible.builtin.include_role:

@@ -7,7 +7,9 @@ wildfly_java_package_name: java-11-openjdk-headless
 wildfly_multicast_addr: 224.0.1.105
 wildfly_bind_addr_private: "{{ hostvars[inventory_hostname].ansible_default_ipv4.address | default('0.0.0.0') }}"
 wildfly_jboss_eap_apply_cp: True
-wildfly_systemd: True
+wildfly_systemd_enable: True
+wildfly_enable_yml_config: True
+wildfly_no_restart_after_patch: True
 app:
   name: 'info-1.1.war'
   url: 'https://drive.google.com/uc?export=download&id=1w9ss5okctnjUvRAxhPEPyC7DmbUwmbhb'
