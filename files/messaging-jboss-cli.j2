@@ -1,0 +1,22 @@
+
+{% for node in amq_cluster_nodes %}
+/socket-binding-group=standard-sockets/remote-destination-outbound-socket-binding={{ node.address }}:add(host={{ node.value }},port=61616)
+/subsystem=messaging-activemq/server=default/remote-connector={{ node.address }}-connector:add(socket-binding={{ node.address }})
+{% endfor %}
+batch
+/subsystem=messaging-activemq/server=default:remove
+/subsystem=messaging-activemq/server=default:add
+
+/subsystem=messaging-activemq/server=default/pooled-connection-factory=activemq-rar.rar:add(entries=["java:/RemoteJmsXA", "java:jboss/RemoteJmsXA"],connectors=[{{ amq_cluster_nodes | map(attribute='inventory_host') | join (',') }}], ha=true)
+
+/subsystem=messaging-activemq/server=default/pooled-connection-factory=activemq-rar.rar:write-attribute(name=user,value=amq_cluster_user)
+/subsystem=messaging-activemq/server=default/pooled-connection-factory=activemq-rar.rar:write-attribute(name=password,value=amq_cluster_pass)
+/subsystem=messaging-activemq/server=default/pooled-connection-factory=activemq-rar.rar:write-attribute(name=rebalance-connections,value=true)
+
+/subsystem=naming/binding=java\:global\/remoteContext:add(binding-type=external-context, class=javax.naming.InitialContext, module=org.apache.activemq.artemis, environment=[java.naming.factory.initial=org.apache.activemq.artemis.jndi.ActiveMQInitialContextFactory, queue.SampleQueue=SampleQueue, topic.SampleTopic=SampleTopic])
+/subsystem=naming/binding=java\:\/queue\/SampleQueue:add(lookup=java:global/remoteContext/SampleQueue,binding-type=lookup)
+/subsystem=naming/binding=java\:\/topic\/SampleTopic:add(lookup=java:global/remoteContext/SampleTopic,binding-type=lookup)
+
+/subsystem=messaging-activemq/server=default/pooled-connection-factory=activemq-rar.rar:write-attribute(name=statistics-enabled,value=true)
+run-batch
+reload
