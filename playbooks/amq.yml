@@ -21,11 +21,22 @@
         opts: nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport
         state: mounted
         fstype: nfs
-  post_tasks:
     - name: Configure promtail
       ansible.builtin.include_role:
         name: promtail
       vars:
         promtail_job_name: amq
         promtail_logfile: /var/log/amq_broker/amq-broker/artemis.log
-        promtail_region: "{{ hostvars[inventory_hostname].placement.region }}"
+        promtail_region: "{{ hostvars[inventory_hostname].placement.region }}"        
+  post_tasks:
+    - name: Install prometheus JMX exporter
+      ansible.builtin.dnf:
+        name: prometheus-jmx-exporter-openjdk11
+        state: present
+    - name: Copy jmx exporter config
+      ansible.builtin.copy:
+        src: ../files/jmx-exporter-amq.yml
+        dest: /opt/amq/amq-broker/etc/jmx-exporter-amq.yml
+        owner: root
+        group: root
+        mode: 0644

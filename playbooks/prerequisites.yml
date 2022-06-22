@@ -13,6 +13,7 @@
           - firewalld
           - ca-certificates
           - python3-lxml
+          - net-tools
           - "{{ jvm_package }}"
     - name: "Get FQDN"
       ansible.builtin.command: "hostname --fqdn"

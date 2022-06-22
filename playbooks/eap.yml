@@ -83,7 +83,7 @@
     #   retries: 3
     #   delay: 5
     #   until: cli_result.rc == 0
-  post_tasks:
+  pre_tasks:
     - name: Configure promtail
       ansible.builtin.include_role:
         name: promtail
@@ -91,3 +91,15 @@
         promtail_job_name: eap
         promtail_logfile: "{{ wildfly_home }}/standalone/log/server.log"
         promtail_region: "{{ hostvars[inventory_hostname].placement.region }}"
+  post_tasks:
+    - name: Install prometheus JMX exporter
+      ansible.builtin.dnf:
+        name: prometheus-jmx-exporter-openjdk11
+        state: present
+    - name: Copy jmx exporter config
+      ansible.builtin.copy:
+        src: ../files/jmx-exporter-eap.yml
+        dest: /opt/jboss-7.4/standalone/configuration/jmx-exporter-eap.yml
+        owner: root
+        group: root
+        mode: 0644        
