@@ -14,6 +14,12 @@
           - ca-certificates
           - python3-lxml
           - "{{ jvm_package }}"
+    - name: "Get FQDN"
+      ansible.builtin.command: "hostname --fqdn"
+      become: yes
+      register: current_fqdn
+      changed_when: false
     - name: "Set FQDN"
       ansible.builtin.command: "hostnamectl set-hostname --static {{ inventory_hostname }}{{ domain_name }}"
       become: yes
+      when: current_fqdn.stdout != (inventory_hostname + domain_name)
