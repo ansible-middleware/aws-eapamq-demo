@@ -131,6 +131,11 @@ security_groups:
           to_port: '18080'
           proto: tcp
           cidr_ip: 10.0.3.48/28
+        - rule_desc: 'prometheus plugin'
+          from_port: '8161'
+          to_port: '8161'
+          proto: tcp
+          cidr_ip: 10.0.3.48/28
     - name: eap
       description: Ingress rules for EAP
       rules:
