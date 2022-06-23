@@ -2,7 +2,9 @@
 amq_broker_ha_enabled: True
 amq_broker_disable_hornetq_protocol: True
 amq_broker_disable_mqtt_protocol: False
-amq_broker_shared_storage: True
+amq_broker_shared_storage: False
 amq_broker_configure_firewalld: True
 amq_broker_host: "{{ inventory_hostname }}{{ domain_name }}"
-amq_broker_java_opts: "-javaagent:/usr/share/java/prometheus-jmx-exporter/jmx_prometheus_javaagent.jar=18080:/opt/amq/amq-broker/etc/jmx-exporter-amq.yml"
+amq_broker_java_opts: "-javaagent:/usr/share/java/prometheus-jmx-exporter/jmx_prometheus_javaagent.jar=0.0.0.0:18080:/etc/sysconfig/jmx-exporter-amq.yml"
+amq_broker_prometheus_enabled: True
+amq_broker_instance_anonymous: True

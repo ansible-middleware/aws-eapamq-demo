@@ -7,19 +7,19 @@ wildfly-configuration:
           port: 6666
       remote-destination-outbound-socket-binding:
         messaging-remote-site1-amq1:
-          host: site1-amq1
+          host: site1-amq1.internal.ansiblemiddleware.com
           port: 61616
       remote-destination-outbound-socket-binding:
         messaging-remote-site1-amq2:
-          host: site1-amq2
+          host: site1-amq2.internal.ansiblemiddleware.com
           port: 61616
       remote-destination-outbound-socket-binding:
         messaging-remote-site2-amq1:
-          host: site2-amq1
+          host: site2-amq1.internal.ansiblemiddleware.com
           port: 61616
       remote-destination-outbound-socket-binding:
         messaging-remote-site2-amq2:
-          host: site2-amq2
+          host: site2-amq2.internal.ansiblemiddleware.com
           port: 61616
   subsystem:
     modcluster:
@@ -54,7 +54,6 @@ wildfly-configuration:
             - "java:jboss/exported/jms/RemoteConnectionFactory"
             - "java:/RemoteJmsXA"
             - "java:jboss/RemoteJmsXA"
-          enable-amq1-prefix: false
           user: amq-cluster-user
           password: amq-cluster-pass
           ha: true

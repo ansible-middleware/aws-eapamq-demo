@@ -1,4 +1,5 @@
 ---
+jbcs_loadbalancer: site1-loadbalancer
 amq_efs_mount: fs-0d3d3c1797c09b6f8.efs.us-east-1.amazonaws.com
 wildfly_yml_configs:
   - eap_configuration_site1.yml

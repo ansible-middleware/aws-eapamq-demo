@@ -10,17 +10,20 @@
     - redhat_csp_download    
     - amq_broker
   pre_tasks:
-    - name: Install NFS utils
-      ansible.builtin.dnf:
-        name: nfs-utils
-        state: present
-    - name: Mount an NFS volume
-      ansible.posix.mount:
-        src: "{{ amq_efs_mount }}:/"
-        path: /opt/amq/amq-broker/data/shared
-        opts: nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport
-        state: mounted
-        fstype: nfs
+    - name: Configure shared fs
+      when: amq_broker_shared_storage
+      block:
+      - name: Install NFS utils
+        ansible.builtin.dnf:
+          name: nfs-utils
+          state: present
+      - name: Mount an NFS volume
+        ansible.posix.mount:
+          src: "{{ amq_efs_mount }}:/"
+          path: /opt/amq/amq-broker/data/shared
+          opts: nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport
+          state: mounted
+          fstype: nfs
     - name: Configure promtail
       ansible.builtin.include_role:
         name: promtail
@@ -28,7 +31,13 @@
         promtail_job_name: amq
         promtail_logfile: /var/log/amq_broker/amq-broker/artemis.log
         promtail_region: "{{ hostvars[inventory_hostname].placement.region }}"        
-  post_tasks:
+    - name: "Configure firewall for jmx exporter port"
+      become: yes
+      firewalld:
+        port: 18080/tcp
+        permanent: true
+        state: enabled
+        immediate: yes
     - name: Install prometheus JMX exporter
       ansible.builtin.dnf:
         name: prometheus-jmx-exporter-openjdk11
@@ -36,7 +45,7 @@
     - name: Copy jmx exporter config
       ansible.builtin.copy:
         src: ../files/jmx-exporter-amq.yml
-        dest: /opt/amq/amq-broker/etc/jmx-exporter-amq.yml
+        dest: /etc/sysconfig/jmx-exporter-amq.yml
         owner: root
         group: root
         mode: 0644
