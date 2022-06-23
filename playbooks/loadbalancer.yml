@@ -19,3 +19,5 @@
         name: nis_enabled
         state: yes
         persistent: yes
+    - name: Allow reverse proxy to work
+      ansible.builtin.command: /usr/sbin/setsebool -P httpd_can_network_connect 1

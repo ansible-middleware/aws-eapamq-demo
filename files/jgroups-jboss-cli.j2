@@ -1,6 +1,3 @@
-{% for node in eap_cluster_nodes %}
-/socket-binding-group=standard-sockets/remote-destination-outbound-socket-binding={{ node.address }}:add(host={{ node.value }},port=7600)
-{% endfor %}
 batch
 # Add the tcpping stack
 /subsystem=jgroups/stack=tcpping:add

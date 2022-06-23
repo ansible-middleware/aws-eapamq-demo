@@ -21,10 +21,53 @@ wildfly-configuration:
         messaging-remote-site2-amq2:
           host: site2-amq2.internal.ansiblemiddleware.com
           port: 61616
+      remote-destination-outbound-socket-binding:
+        jgroups-site1-eap1:
+          host: site1-eap1.internal.ansiblemiddleware.com
+          port: 7600
+      remote-destination-outbound-socket-binding:
+        jgroups-site1-eap2:
+          host: site1-eap2.internal.ansiblemiddleware.com
+          port: 7600
+      remote-destination-outbound-socket-binding:
+        jgroups-site2-eap1:
+          host: site2-eap1.internal.ansiblemiddleware.com
+          port: 7600
+      remote-destination-outbound-socket-binding:
+        jgroups-site2-eap2:
+          host: site2-eap2.internal.ansiblemiddleware.com
+          port: 7600
   subsystem:
+    jgroups:
+      stack: 
+        tcpping: !remove
+    #       transport:
+    #         TCP: 
+    #           socket-binding: jgroups-tcp
+    #       protocol: 
+    #         TCPPING:
+    #           socket-bindings:
+    #             - jgroups-site2-eap1
+    #             - jgroups-site1-eap1
+    #             - jgroups-site2-eap2
+    #             - jgroups-site1-eap2
+    #           properties:
+    #             initial_hosts: "10.0.4.20[7600],10.0.3.23[7600],10.0.4.30[7600],10.0.3.27[7600]"
+    #             port_range: 0
+    #         MERGE3:
+    #         FD_SOCK:
+    #         FD_ALL:
+    #         VERIFY_SUSPECT:
+    #         pbcast.NAKACK2:
+    #         UNICAST3:
+    #         pbcast.STABLE:
+    #         pbcast.GMS:
+    #         MFC:
+    #         FRAG3:   
     modcluster:
       proxy:
         default:
+          listener: default
           proxies:
             - site2-loadbalancer
     messaging-activemq:

@@ -5,10 +5,17 @@ LoadModule cluster_slotmem_module modules/mod_cluster_slotmem.so
 LoadModule manager_module modules/mod_manager.so
 LoadModule proxy_cluster_module modules/mod_proxy_cluster.so
 LoadModule advertise_module modules/mod_advertise.so
+LoadModule proxy_wstunnel_module modules/mod_proxy_wstunnel.so
 
 MemManagerFile {{ httpd.home }}/httpd/cache/mod_cluster
 PersistSlots On
 EnableOptions
+
+EnableWsTunnel
+WSUpgradeHeader websocket
+
+SSLProxyCheckPeerCN off
+SSLProxyCheckPeerName off
 
 <VirtualHost *:80>
   ProxyPreserveHost On

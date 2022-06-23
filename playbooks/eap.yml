@@ -1,25 +1,65 @@
 ---
-- name: "EAP installation and configuration"
+- name: "EAP installation"
   hosts: eap
   become: yes
   collections:
     - middleware_automation.redhat_csp_download
     - middleware_automation.wildfly
-    - middleware_automation.jcliff
   roles:
     - redhat_csp_download
-    - jcliff
     - wildfly_install
-  tasks:
-    - name: "Ensures webapp {{ app.name }} has been retrieved from {{ app.url }}"
-      get_url:
-        url: "{{ app.url }}"
-        dest: "{{ wildfly_install_workdir }}/{{ app.name }}"
-      retries: 5
-      delay: 5
+  pre_tasks:
+    - name: Configure promtail
+      ansible.builtin.include_role:
+        name: promtail
+      vars:
+        promtail_job_name: eap
+        promtail_logfile: "{{ wildfly_home }}/standalone/log/server.log"
+        promtail_region: "{{ hostvars[inventory_hostname].placement.region }}"
+
+- name: "EAP configuration"
+  hosts: eap
+  become: yes
+  collections:
+    - middleware_automation.jcliff
+    - middleware_automation.wildfly
+  roles:
+    - jcliff
+    - wildfly_systemd
+  pre_tasks:
+    - name: Remove former yaml config extension
+      file:
+        state: absent
+        path: "{{ wildfly_home }}/{{ item }}" 
+      loop:
+        - modules/system/layers/base/org/jboss/as/controller/main/wildfly-controller-15.0.2.Final-redhat-00001.jar
+        - modules/system/layers/base/.overlays/layer-base-jboss-eap-7.4.5.CP/org/jboss/as/controller/main/wildfly-controller-15.0.13.Final-redhat-00001.jar
+    - name: Copy patched yaml config extension
+      copy:
+        src: files/wildfly-controller-15.0.14.Final-redhat-SNAPSHOT.jar
+        dest: "{{ wildfly_home }}/{{ item }}/wildfly-controller-15.0.14.Final-redhat-SNAPSHOT.jar"
+        mode: 0644
+        owner: "{{ wildfly_user }}"
+        group: "{{ wildfly_user }}"
+      loop:
+        - modules/system/layers/base/org/jboss/as/controller/main/
+        - modules/system/layers/base/.overlays/layer-base-jboss-eap-7.4.5.CP/org/jboss/as/controller/main/
+    - name: Update patched module meta
+      lineinfile:
+        regexp: '<resource-root path="wildfly-controller-15.0.13.Final-redhat-00001.jar"/>'
+        line: '<resource-root path="wildfly-controller-15.0.14.Final-redhat-SNAPSHOT.jar"/>'
+        path: "{{ wildfly_home }}/modules/system/layers/base/.overlays/layer-base-jboss-eap-7.4.5.CP/org/jboss/as/controller/main/module.xml"
+  post_tasks:
     - name: "Set info app destination"
       set_fact:
-        info_app_dest: "{{ wildfly_install_workdir }}/{{ app.name }}"
+        info_app_dest: "{{ wildfly_home }}/standalone/deployments/iot-example.war"
+    - name: Copy example app to nodes
+      copy:
+        src: files/iot-example.war
+        dest: "{{ info_app_dest }}"
+        mode: 0644
+        owner: "{{ wildfly_user }}"
+        group: "{{ wildfly_user }}"
     - name: "Fine tuning configuration"
       jcliff:
         wfly_home: "{{ wildfly_home }}"
@@ -28,9 +68,6 @@
           - system_properties:
             - name: JBOSS_ID
               value: "{{ inventory_hostname }}"
-          - deployments:
-            - name: "{{ info_app_dest | basename }}"
-              path: "{{ info_app_dest }}"
     - name: Create cluster node list
       set_fact:
         eap_cluster_nodes: >
@@ -51,7 +88,7 @@
       ansible.builtin.command: >
         {{ wildfly_home + '/bin/jboss-cli.sh' }} -c --output-json --file=/tmp/jgroups-jboss-cli --controller=localhost:9990
       changed_when: false
-      failed_when: "'WFLYCTL0212: Duplicate resource' not in cli_result.stdout"
+      failed_when: "cli_result.rc != 0 and 'WFLYCTL0212: Duplicate resource' not in cli_result.stdout"
       register: cli_result
       become: yes
       retries: 3
@@ -75,31 +112,11 @@
     #     dest: "/tmp/messaging-jboss-cli"
     # - name: "Execute CLI for messaging"
     #   ansible.builtin.command: >
-    #     {{ wildfly_home + '/bin/jboss-cli.sh' }} -c --output-json --file=/tmp/messaging-jboss-cli --controller=localhost:9990
+    #     {{ wildfly_home + '/bin/jboss-cli.sh' }} -c --output-json --file=/tmp/jgroups-jboss-cli --controller=localhost:9990
     #   changed_when: false
-    #   failed_when: "'WFLYCTL0212: Duplicate resource' not in cli_result.stdout"
+    #   failed_when: "cli_result.rc != 0 and 'WFLYCTL0212: Duplicate resource' not in cli_result.stdout"
     #   register: cli_result
     #   become: yes
     #   retries: 3
     #   delay: 5
     #   until: cli_result.rc == 0
-  pre_tasks:
-    - name: Configure promtail
-      ansible.builtin.include_role:
-        name: promtail
-      vars:
-        promtail_job_name: eap
-        promtail_logfile: "{{ wildfly_home }}/standalone/log/server.log"
-        promtail_region: "{{ hostvars[inventory_hostname].placement.region }}"
-  post_tasks:
-    - name: Install prometheus JMX exporter
-      ansible.builtin.dnf:
-        name: prometheus-jmx-exporter-openjdk11
-        state: present
-    - name: Copy jmx exporter config
-      ansible.builtin.copy:
-        src: ../files/jmx-exporter-eap.yml
-        dest: /opt/jboss-7.4/standalone/configuration/jmx-exporter-eap.yml
-        owner: root
-        group: root
-        mode: 0644        
