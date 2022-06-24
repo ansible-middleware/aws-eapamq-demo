@@ -31,13 +31,6 @@
         promtail_job_name: amq
         promtail_logfile: /var/log/amq_broker/amq-broker/artemis.log
         promtail_region: "{{ hostvars[inventory_hostname].placement.region }}"        
-    - name: "Configure firewall for jmx exporter port"
-      become: yes
-      firewalld:
-        port: 18080/tcp
-        permanent: true
-        state: enabled
-        immediate: yes
     - name: Install prometheus JMX exporter
       ansible.builtin.dnf:
         name: prometheus-jmx-exporter-openjdk11
@@ -49,3 +42,17 @@
         owner: root
         group: root
         mode: 0644
+  post_tasks:
+    - name: "Configure firewall for jmx exporter port"
+      become: yes
+      firewalld:
+        port: 18080/tcp
+        permanent: true
+        state: enabled
+        immediate: yes
+    - name: "Start promtail"
+      become: yes
+      service:
+        name: promtail
+        state: restarted
+        enabled: True

@@ -8,3 +8,4 @@ amq_broker_host: "{{ inventory_hostname }}{{ domain_name }}"
 amq_broker_java_opts: "-javaagent:/usr/share/java/prometheus-jmx-exporter/jmx_prometheus_javaagent.jar=0.0.0.0:18080:/etc/sysconfig/jmx-exporter-amq.yml"
 amq_broker_prometheus_enabled: True
 amq_broker_instance_anonymous: True
+amq_broker_offline_install: True
