@@ -16,6 +16,12 @@
         promtail_job_name: eap
         promtail_logfile: "{{ wildfly_home }}/standalone/log/server.log"
         promtail_region: "{{ hostvars[inventory_hostname].placement.region }}"
+  post_tasks:
+    - name: Ensure eap is shutdown
+      command: killall -9 java
+      register: kill
+      failed_when: False
+      changed_when: kill.rc == 0
 
 - name: "EAP configuration"
   hosts: eap
@@ -50,6 +56,9 @@
         line: '<resource-root path="wildfly-controller-15.0.14.Final-redhat-SNAPSHOT.jar"/>'
         path: "{{ wildfly_home }}/modules/system/layers/base/.overlays/layer-base-jboss-eap-7.4.5.CP/org/jboss/as/controller/main/module.xml"
   post_tasks:
+    - name: Check for management port
+      wait_for:
+        port: 9990
     - name: "Set info app destination"
       set_fact:
         info_app_dest: "{{ wildfly_home }}/standalone/deployments/iot-example.war"
