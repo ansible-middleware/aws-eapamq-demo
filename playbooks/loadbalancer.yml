@@ -21,3 +21,5 @@
         persistent: yes
     - name: Allow reverse proxy to work
       ansible.builtin.command: /usr/sbin/setsebool -P httpd_can_network_connect 1
+    - name: Add reverse proxied port to selinux
+      ansible.builtin.command: semanage port -m -t http_port_t -p tcp 8080
