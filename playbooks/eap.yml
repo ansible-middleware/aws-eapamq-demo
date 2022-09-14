@@ -3,18 +3,18 @@
   hosts: eap
   become: yes
   collections:
-    - middleware_automation.redhat_csp_download
-    - middleware_automation.wildfly
+    - redhat.redhat_csp_download
+    - redhat.eap
   roles:
     - redhat_csp_download
-    - wildfly_install
+    - eap_install
   pre_tasks:
     - name: Configure promtail
       ansible.builtin.include_role:
         name: promtail
       vars:
         promtail_job_name: eap
-        promtail_logfile: "{{ wildfly_home }}/standalone/log/server.log"
+        promtail_logfile: "{{ eap_home }}/standalone/log/server.log"
         promtail_region: "{{ hostvars[inventory_hostname].placement.region }}"
   post_tasks:
     - name: Ensure eap is shutdown
@@ -28,25 +28,25 @@
   become: yes
   collections:
     - middleware_automation.jcliff
-    - middleware_automation.wildfly
+    - redhat.eap
   roles:
     - jcliff
-    - wildfly_systemd
+    - eap_systemd
   pre_tasks:
     - name: Remove former yaml config extension
       file:
         state: absent
-        path: "{{ wildfly_home }}/{{ item }}" 
+        path: "{{ eap_home }}/{{ item }}" 
       loop:
         - modules/system/layers/base/org/jboss/as/controller/main/wildfly-controller-15.0.2.Final-redhat-00001.jar
         - modules/system/layers/base/.overlays/layer-base-jboss-eap-7.4.5.CP/org/jboss/as/controller/main/wildfly-controller-15.0.13.Final-redhat-00001.jar
     - name: Copy patched yaml config extension
       copy:
         src: files/wildfly-controller-15.0.14.Final-redhat-SNAPSHOT.jar
-        dest: "{{ wildfly_home }}/{{ item }}/wildfly-controller-15.0.14.Final-redhat-SNAPSHOT.jar"
+        dest: "{{ eap_home }}/{{ item }}/wildfly-controller-15.0.14.Final-redhat-SNAPSHOT.jar"
         mode: 0644
-        owner: "{{ wildfly_user }}"
-        group: "{{ wildfly_user }}"
+        owner: "{{ eap_user }}"
+        group: "{{ eap_user }}"
       loop:
         - modules/system/layers/base/org/jboss/as/controller/main/
         - modules/system/layers/base/.overlays/layer-base-jboss-eap-7.4.5.CP/org/jboss/as/controller/main/
@@ -54,24 +54,24 @@
       lineinfile:
         regexp: '<resource-root path="wildfly-controller-15.0.13.Final-redhat-00001.jar"/>'
         line: '<resource-root path="wildfly-controller-15.0.14.Final-redhat-SNAPSHOT.jar"/>'
-        path: "{{ wildfly_home }}/modules/system/layers/base/.overlays/layer-base-jboss-eap-7.4.5.CP/org/jboss/as/controller/main/module.xml"
+        path: "{{ eap_home }}/modules/system/layers/base/.overlays/layer-base-jboss-eap-7.4.5.CP/org/jboss/as/controller/main/module.xml"
   post_tasks:
     - name: Check for management port
       wait_for:
         port: 9990
     - name: "Set info app destination"
       set_fact:
-        info_app_dest: "{{ wildfly_home }}/standalone/deployments/iot-example.war"
+        info_app_dest: "{{ eap_home }}/standalone/deployments/iot-example.war"
     - name: Copy example app to nodes
       copy:
         src: files/iot-example.war
         dest: "{{ info_app_dest }}"
         mode: 0644
-        owner: "{{ wildfly_user }}"
-        group: "{{ wildfly_user }}"
+        owner: "{{ eap_user }}"
+        group: "{{ eap_user }}"
     - name: "Fine tuning configuration"
       jcliff:
-        wfly_home: "{{ wildfly_home }}"
+        wfly_home: "{{ eap_home }}"
         timeout: 7000
         components:
           - system_properties:
@@ -95,7 +95,7 @@
         dest: "/tmp/jgroups-jboss-cli"
     - name: "Execute CLI for jgroups"
       ansible.builtin.command: >
-        {{ wildfly_home + '/bin/jboss-cli.sh' }} -c --output-json --file=/tmp/jgroups-jboss-cli --controller=localhost:9990
+        {{ eap_home + '/bin/jboss-cli.sh' }} -c --output-json --file=/tmp/jgroups-jboss-cli --controller=localhost:9990
       changed_when: false
       failed_when: "cli_result.rc != 0 and 'WFLYCTL0212: Duplicate resource' not in cli_result.stdout"
       register: cli_result
@@ -103,29 +103,3 @@
       retries: 3
       delay: 5
       until: cli_result.rc == 0
-    # - name: Create AMQ cluster node list
-    #   set_fact:
-    #     amq_cluster_nodes: >
-    #       {{ amq_cluster_nodes | default([]) + [
-    #            {
-    #              "name": item,
-    #              "address": 'messaging-remote-' + item,
-    #              "inventory_host": item + '-connector',
-    #              "value": hostvars[item].ansible_default_ipv4.address | default(item)
-    #            }
-    #          ] }}
-    #   loop: "{{ groups['amq'] }}"
-    # - name: "copy messaging template"
-    #   template:
-    #     src: "../files/messaging-jboss-cli.j2"
-    #     dest: "/tmp/messaging-jboss-cli"
-    # - name: "Execute CLI for messaging"
-    #   ansible.builtin.command: >
-    #     {{ wildfly_home + '/bin/jboss-cli.sh' }} -c --output-json --file=/tmp/jgroups-jboss-cli --controller=localhost:9990
-    #   changed_when: false
-    #   failed_when: "cli_result.rc != 0 and 'WFLYCTL0212: Duplicate resource' not in cli_result.stdout"
-    #   register: cli_result
-    #   become: yes
-    #   retries: 3
-    #   delay: 5
-    #   until: cli_result.rc == 0
