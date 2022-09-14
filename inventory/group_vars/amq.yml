@@ -5,7 +5,19 @@ amq_broker_disable_mqtt_protocol: False
 amq_broker_shared_storage: False
 amq_broker_configure_firewalld: True
 amq_broker_host: "{{ inventory_hostname }}{{ domain_name }}"
-amq_broker_java_opts: "-javaagent:/usr/share/java/prometheus-jmx-exporter/jmx_prometheus_javaagent.jar=0.0.0.0:18080:/etc/sysconfig/jmx-exporter-amq.yml"
+amq_broker_jmx_exporter_enabled: True
+amq_broker_jmx_exporter_config_path: /etc/sysconfig/jmx-exporter-amq.yml
 amq_broker_prometheus_enabled: True
 amq_broker_instance_anonymous: True
 amq_broker_offline_install: True
+amq_broker_hawtio_role: admin
+amq_broker_users:
+  - user: amq
+    password: amqbrokerpass
+    roles: [ admin ]
+  - user: amq-cluster-user
+    password: amq-cluster-pass
+    roles: [ admin ]
+amq_broker_roles:
+  - name: admin
+    permissions: [ createNonDurableQueue, deleteNonDurableQueue, createDurableQueue, deleteDurableQueue, createAddress, deleteAddress, consume, browse, send, manage ]

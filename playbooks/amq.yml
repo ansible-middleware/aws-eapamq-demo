@@ -4,8 +4,8 @@
   gather_facts: yes
   become: yes
   collections:
-    - middleware_automation.redhat_csp_download
-    - middleware_automation.amq
+    - redhat.redhat_csp_download
+    - redhat.amq_broker
   roles:
     - redhat_csp_download    
     - amq_broker
@@ -43,13 +43,6 @@
         group: root
         mode: 0644
   post_tasks:
-    - name: "Configure firewall for jmx exporter port"
-      become: yes
-      firewalld:
-        port: 18080/tcp
-        permanent: true
-        state: enabled
-        immediate: yes
     - name: "Start promtail"
       become: yes
       service:
